@@ -102,3 +102,14 @@ public class App {
 
 ##### 以及lock接口实现类
 
+
+
+## 锁
+
+```
+synchronized
+```
+
+- synchronized 写在方法上，但作用到类上
+- synchronized 在非静态方法上，作用的是new 的对象 synchronized（this）
+- synchronized 在静态方法上，作用的是该类的Class对象（全局锁）
