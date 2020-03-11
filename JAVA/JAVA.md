@@ -4,13 +4,13 @@
 
 
 
-### jdk1.8新特性
+## jdk1.8新特性
 
-- #### 函数式接口
+### 函数式接口
 
-  - @FunctionInterface
-  - default 多个
-  - static多个
+- @FunctionInterface   lambda表达式
+- default 多个
+- static多个
 
 
 
@@ -198,7 +198,7 @@ public class Singleton3 {
     }
 }
 ```
- 
+
 
 
 
