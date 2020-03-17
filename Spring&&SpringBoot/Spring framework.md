@@ -10,7 +10,7 @@
 ##### @Bean    
 
 - 给容器中注册一个bean  在 @Configuration  ;
-- 返回值的类型就是注册到@Bean
+- 返回值的类型就是注册到@Bean方法的返回值
 
 ##### @ComponentScan
 
@@ -158,7 +158,55 @@ bean创建-------初始化--------销毁的过程
 ##### 第四种、自定义生命周期
 
 - BeanPostProcessor（Bean后置处理器）,在bean执行初始前后执行处理工作
-  - postProcessBeforeInitialization()在创建Bean实例，任何初始化方法调用**之前**执行
-  - postProcessAfterInitialization()在创建Bean实例，初始化方法调用**之后**执行
+- 自定义一个类，实现BeanPostProcessor，所有的bean初始化前和后都会进入到该方法执行
+- 自定义类是一个组件，需要加入到容器中
+  - postProcessBeforeInitialization()在创建**任何Bean**实例，任何初始化方法调用**之前**执行
+  - postProcessAfterInitialization()在创建**任何Bean**实例，初始化方法调用**之后**执行
 
 #### BeanPostProcessor工作原理
+
+#### 属性赋值
+
+##### @Value
+
+- 在组件的属性上
+
+- 基本数组
+- 可以写SpELl
+- 可以${} ；取出配置文件中值（在运行环境变量里面的值）
+
+##### @PropertySource
+
+- 读取外部配置文件
+- 在类上
+
+- （value={"classpath:/my.properties","...","..."}）
+
+#### 自动装配
+
+Spring利用依赖注入（DI），完成IOC容器中的各个组件的依赖赋值
+
+##### @Autowired
+
+- 默认优先按照类型去容器中寻找对应的组件，找到就赋值
+
+- 如果找到多个相同的组件，再将属性的名称作为组件的ID去容器中查找
+
+- 自动装配，默认一定要将属性赋值，默认一定要找到（required=true），否则报错（找不到组件）
+
+  可以设置Autowired(required = false) 非必须找到
+
+##### @Qualifier("name") 
+
+- IOC容器中某个组件有多个时，可以明确指定需要装配组件的ID
+- 和@Autowired配合使用
+
+##### @Primary 
+
+- 设置为默认首选装配的Bean（当IOC容器中该bean有多个时）
+- 和@Bean搭配使用，装配的位置不能有@Qualifier
+
+
+
+
+
