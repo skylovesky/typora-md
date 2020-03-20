@@ -6,7 +6,7 @@
 
 ### 下联：判断  干活  通知
 
-- this.wait() or  not wait()
+- this.wait() or  not wait()   ----wait()匹配的是synchronized
 - do something
 - this.notifyAll() 唤醒通知，这里注意虚假唤醒
 
@@ -142,13 +142,15 @@ public class App {
 
 ##### 以及lock接口实现类
 
+##### Condition与lock接口搭配
 
 
-## 锁
 
-```
-synchronized
-```
+## 锁//to do
+
+- 公平锁和非公平锁
+
+#####  synchronized    wait
 
 - synchronized 写在方法上，但作用到类上
 - synchronized 在非静态方法上，作用的是new 的对象 synchronized（this）
