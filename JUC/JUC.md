@@ -136,13 +136,74 @@ public class App {
 
 
 
-#### 知识
+## lock
 
 ##### lock接口
 
 ##### 以及lock接口实现类
 
 ##### Condition与lock接口搭配
+
+##### Condition 代替wait() 与notifyAll
+
+```
+Condition condition = lock.newCondition();		
+condition.await();====wait()
+condition.signalAll(); notifyAll()
+
+```
+
+## 精确唤醒
+
+- 利用lock已经Condition
+
+- 一把锁lock，多个钥匙condition
+
+  1. 一把锁
+
+     - Lock lock = new ReentrantLock();
+
+  2. 多个钥匙
+
+     - Condition c1 = lock.newCondition();
+     - Condition c2 = lock.newCondition();
+     - Condition c3 = lock.newCondition();
+
+  3. 线程标记位
+
+     - int num = 1;
+
+  4. 指定钥匙被唤醒
+
+     - c2.signal（）；
+
+     - ```java
+       class ShareDate {   
+           private Lock lock = new ReentrantLock(); 
+           private int num = 1;    
+           private Condition c1 = lock.newCondition();
+           private Condition c2 = lock.newCondition();  
+           private Condition c3 = lock.newCondition();   
+           private void service() {       
+               lock.lock();       
+               try {          
+                   while (num != 1) {  
+                       c1.await();          
+                   }            
+                   //todo service        
+                   for (int i = 0; i < 10; i++) {                
+                       System.out.println(Thread.currentThread().getName() + "\t" + i);     
+                   }           
+                   num = 2;          
+                   c2.signal(); //指定钥匙插入   
+               }
+               catch (Exception e) { 
+               } finally {          
+                   lock.unlock();       
+               }    
+           }
+       }
+       ```
 
 
 
@@ -155,3 +216,11 @@ public class App {
 - synchronized 写在方法上，但作用到类上
 - synchronized 在非静态方法上，作用的是new 的对象 synchronized（this）
 - synchronized 在静态方法上，作用的是该类的Class对象（全局锁）
+
+
+
+## Callable
+
+## FutureTask
+
+## 线程池

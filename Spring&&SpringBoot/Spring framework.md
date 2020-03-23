@@ -206,7 +206,28 @@ Spring利用依赖注入（DI），完成IOC容器中的各个组件的依赖赋
 - 设置为默认首选装配的Bean（当IOC容器中该bean有多个时）
 - 和@Bean搭配使用，装配的位置不能有@Qualifier
 
+##### @Resource
 
+- java规范的注解
+- 默认按照组件名称装配的
+- 没有能支持@Primary
+- 和@Autowired配合
 
+##### @Inject
 
+- 需要导入javax.inject包
+- 和Autowired功能一样
 
+##### AutowiredAnnotationBeanPostProcessor
+
+- 解析完成自动装配功能
+
+##### @Autowired
+
+- 标注在方法上，Spring容器在创建当前对象，就会调用方法，完成赋值，方法使用的参数，自定义类型的值会从IOC容器中获取
+- 标记在有参构造器方法上（或者标记在构造器的参数前面），也是从IOC注入该参数
+- 参数前面前，从IOC容器注入参数
+
+##### @Bean
+
+- 标注的方法，方法参数的值从IOC容器中获取
