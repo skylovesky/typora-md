@@ -21,12 +21,22 @@
 
 
 
+### jre/lib
+
+jre:java Runtime environment (Java 运行时环境)
+
+### rt.jar
+
+rt.jar java runtime （Java运行jar）
+
 ### 双亲委派
 
 - 在最顶端查找Class
 - 我爸是李刚，有事找我爸
 - 优先加载java自己的Class  rt.jar (running time .jar)，加载到之后不在管后面的。
 - ![](images/jvm4.png)
+
+
 
 ### 沙箱安全
 
