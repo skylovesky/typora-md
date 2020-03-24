@@ -279,3 +279,77 @@ Spring利用依赖注入（DI），完成IOC容器中的各个组件的依赖赋
 
 - 没有标注环境标识的bean，在任何环境都会被加载
 
+## AOP面向切面【动态代理】
+
+指程序在运行期间动态的将某段代码切入到指定位置进行运行的编程方式
+
+1. 导入AOP模块：Spring AOP(spring-aspects)
+2. 在业务逻辑运行（方法之前、方法运行结束、方法出现异常）
+3. 定义切面类；（切面类感知业务逻辑的运行）
+   - 通知方法
+     - 前置通知（@Before）：在目标方法运行之前通知
+     - 后置通知（@After）：在目标方法运行之后通知
+     - 返回通知（@AfterReturning）：在目标方法正常返回通知
+     - 异常通知（@AfterThrowing）：在目标方法运行出现异常
+     - 环绕通知（@Around）：动态代理，手动推进方法运行
+4. 给切面类的目标方法标注何时何地运行（通知注解）
+5. 将切面类和业务逻辑类（目标方法所在类）都切入到IOC容器中
+6. 必须告诉Spring哪个类是切面类（给切面类加注解@Aspect）
+7. 给配置类中Config 加入@EnableAspectJAutoProxy，开启基于注解的AOP模式
+
+##### @EnableAspectJAutoProxy
+
+- 开启基于注解的AOP模式
+- 在Spring中很多@EnableXXX 开启某一项功能
+
+##### @Aspect
+
+- 标记这是一个切面类
+
+##### JoinPoint类
+
+- 
+
+##### @Before
+
+- 在目标方法之前切入
+- @Before（“....”）  切入点表达式（指定在哪切入）
+
+##### @After
+
+- 在目标方法运行结束之后切入
+- 无论方法是正常结束还是异常结束
+
+##### @AfterReturning
+
+```java
+@AfterReturning(value="point()",returning="result")//returning 指定方法接收返回值
+public void logReturn(JoinPoint joinPoint,Object result){//JoinPoint如果写，必须写在参数的第一位
+    
+}
+```
+
+##### @AfterThrowing
+
+```java
+@AfterThrowing(value="point()",throwing="exception")//throwing 指定方法接收异常
+public void logException(JoinPoint joinPoint,Exception exception){
+    
+}
+```
+
+
+
+##### @Pointcut
+
+- 抽取公共的切入点表达式
+
+  ```java
+  @Pointcut("execution( public int com.sky.*(..))")
+  public void pointCut(){}
+  
+  @Before("pointCut()")
+  public void logStart(){}
+  ```
+
+  
