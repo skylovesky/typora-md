@@ -170,17 +170,22 @@ bean创建-------初始化--------销毁的过程
 ##### @Value
 
 - 在组件的属性上
-
 - 基本数组
 - 可以写SpELl
 - 可以${} ；取出配置文件中值（在运行环境变量里面的值）
+- @Value(${}) 也可以作用于方法内的属性上 
+  - public void test(@Value("$(password")  String  password )
 
 ##### @PropertySource
 
-- 读取外部配置文件
-- 在类上
+- 属性的来源
 
-- （value={"classpath:/my.properties","...","..."}）
+- 读取外部配置文件
+- 作用于类
+- 加载到了环境变量中ConfigurableEnvironment
+- 读取外部配置文件中的 K-V保存到运行的环境变量中
+- @PropertySource（value = {“classpath：/.properties”，“”}）
+- 用@Value("${Key}")  取出配置文件的值
 
 #### 自动装配
 
@@ -231,3 +236,46 @@ Spring利用依赖注入（DI），完成IOC容器中的各个组件的依赖赋
 ##### @Bean
 
 - 标注的方法，方法参数的值从IOC容器中获取
+
+##### @Profile
+
+- Profile是Spring提供的，可以根据当前环境，动态激活和切换一系列组件的功能
+
+- 指定组件在哪个环境下才能被注册到IOC容器中
+
+- @Profile("default")  default是默认环境标识
+
+  1. 加上环境标识后，只有这个环境被激活，组件才会被加入到IOC容器中
+
+  2. 默认激活的环境标识是default
+
+  3. 激活环境
+
+     - 使用命令行动态参数：JVM运行参数
+
+       -Dspring.profiles.active=test  
+
+       所有环境标识为test的被激活
+
+     - 代码
+
+       1. 创建ApplicationContext对象
+
+          AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(); //无参构造器
+
+       2. 设置需要激活的环境
+
+          context.getEnvironment().setActiveProfiles("test","dev");
+
+       3. 注册主配置类
+
+          context.register(MainConfig.class);
+
+       4. 启动刷新容器
+
+          context.refresh();
+
+- @Profie()在配置类上时，只有指定的环境的时候，整个配置类里面所有配置才能开始生效
+
+- 没有标注环境标识的bean，在任何环境都会被加载
+
