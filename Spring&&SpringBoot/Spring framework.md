@@ -352,4 +352,125 @@ public void logException(JoinPoint joinPoint,Exception exception){
   public void logStart(){}
   ```
 
+
+
+
+### AOP原理
+
+##### @EnableAspectJAutoProxy
+
+- 利用AspectJAutoProxyRegistrar 给容器注册Bean
+
+  源码如下：
+
+  ```java
+  @Target(ElementType.TYPE)
+  @Retention(RetentionPolicy.RUNTIME)
+  @Documented
+  @Import(AspectJAutoProxyRegistrar.class)
+  public @interface EnableAspectJAutoProxy {
+  	boolean proxyTargetClass() default false;
+  	boolean exposeProxy() default false;
+  }
   
+  ```
+
+  ```java
+  class AspectJAutoProxyRegistrar implements ImportBeanDefinitionRegistrar {//ImportBeanDefinitionRegistrar注册组件接口;参考本文档@import
+  		
+  	@Override
+  	public void registerBeanDefinitions(
+  			AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+  
+  		AopConfigUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(registry);
+  
+  		AnnotationAttributes enableAspectJAutoProxy =
+  				AnnotationConfigUtils.attributesFor(importingClassMetadata, EnableAspectJAutoProxy.class);
+  		if (enableAspectJAutoProxy.getBoolean("proxyTargetClass")) {
+  			AopConfigUtils.forceAutoProxyCreatorToUseClassProxying(registry);
+  		}
+  		if (enableAspectJAutoProxy.getBoolean("exposeProxy")) {
+  			AopConfigUtils.forceAutoProxyCreatorToExposeProxy(registry);
+  		}
+  	}
+  
+  }
+  ```
+
+  ```java
+  public abstract class AopConfigUtils {
+      /**
+  	 * The bean name of the internally managed auto-proxy creator.
+  	 */
+  	public static final String AUTO_PROXY_CREATOR_BEAN_NAME =
+  			"org.springframework.aop.config.internalAutoProxyCreator";
+      
+      /**
+  	 * Stores the auto proxy creator classes in escalation order.
+  	 */
+  	private static final List<Class<?>> APC_PRIORITY_LIST = new ArrayList<Class<?>>();
+  
+      static {
+  		APC_PRIORITY_LIST.add(InfrastructureAdvisorAutoProxyCreator.class);
+  		APC_PRIORITY_LIST.add(AspectJAwareAdvisorAutoProxyCreator.class);
+  		APC_PRIORITY_LIST.add(AnnotationAwareAspectJAutoProxyCreator.class);
+  	}
+      
+   		private static BeanDefinition registerOrEscalateApcAsRequired(Class<?> cls, BeanDefinitionRegistry registry, Object source) {
+  		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
+  		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
+  			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+  			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
+  				int currentPriority = findPriorityForClass(apcDefinition.getBeanClassName());
+  				int requiredPriority = findPriorityForClass(cls);
+  				if (currentPriority < requiredPriority) {
+  					apcDefinition.setBeanClassName(cls.getName());
+  				}
+  			}
+  			return null;
+  		}
+  		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
+  		beanDefinition.setSource(source);
+  		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);
+  		beanDefinition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
+  		registry.registerBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME, beanDefinition);
+  		return beanDefinition;
+  	}   
+  }
+  ```
+
+  给容器中注入AnnotationAwareAspectJAutoProxyCreator  （自动代理创建器）
+
+##### AnnotationAwareAspectJAutoProxyCreator 
+
+> **所有@EnableXXX的原理，类似，查看@Enable注册自动或初始化时了哪些组件，查看注册组件什么时候工作，以及工作时的功能**
+
+继承关系
+
+![](images/spring1.png)
+
+> ##### 后置处理器
+>
+> （BeanPostProcessor）
+>
+> bean初始化前后做的事
+>
+> ##### 自动装配
+>
+> （BeanFactoryAware）
+
+##### BeanPostProcessor 
+
+- 主要查看其子类重写的实现方法 
+
+
+
+##### BeanFactoryAware
+
+- 主要查看其子类重写的实现方法
+
+
+
+### refresh() 刷新容器
+
+AbstractApplicationContext
