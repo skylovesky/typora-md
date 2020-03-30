@@ -95,6 +95,11 @@ bin
 
 ### SSH秘钥连接Githug
 
+[使用SSH密钥连接Github]: https://www.xuanfengge.com/using-ssh-key-link-github-photo-tour.html
+[GitHub如何配置SSH Key]: https://blog.csdn.net/u013778905/article/details/83501204
+
+
+
 #### 设置git的user name和email
 
 ```cmake
