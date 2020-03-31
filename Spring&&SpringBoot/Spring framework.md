@@ -471,6 +471,26 @@ public void logException(JoinPoint joinPoint,Exception exception){
 
 
 
-### refresh() 刷新容器
+## 声明式事务
+
+#### @Transactional
+
+- 表示当前方法是事务方法
+
+- 需要@EnableTransactionManagement
+- 需要配置事务管理器PlatformTransactionManager的实现接口（基于平台的PlatformTransactionManager）
+
+#### @EnableTransactionManagement
+
+- 开启基于注解的事务管理功能
+
+#### PlatformTransactionManager
+
+- 事务管理器  需要配置要管理的数据源DataSource
+- 注册PlatformTransactionManager到容器中
+
+
+
+# refresh() 刷新容器
 
 AbstractApplicationContext
