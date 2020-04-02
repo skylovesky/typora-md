@@ -423,9 +423,11 @@ public interface BeanDefinitionRegistry extends AliasRegistry {
 
 ```
 
+## Lifecycle
+
+- 
 
 
-## DefaultListableBeanFactory
 
 
 
@@ -435,7 +437,87 @@ public interface BeanDefinitionRegistry extends AliasRegistry {
 
 
 
-## AnnotationConfigApplicationContext
+## ApplicationContext
+
+- 应用上下文
+
+```java
+
+package org.springframework.context;
+
+import org.springframework.beans.factory.HierarchicalBeanFactory;
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.core.env.EnvironmentCapable;
+import org.springframework.core.io.support.ResourcePatternResolver;
+
+/**
+ * 提供应用程序配置的中央接口;
+ * 用于访问应用程序组件的Bean工厂方法;
+ * 以通用方式加载文件资源的能力;
+ * 向注册侦听器发布事件的能力;
+ * 解析消息的能力;支持国际化
+ * 从父上下文继承。子代上下文中的定义
+ * 总是优先考虑。这意味着，例如，一个单亲
+ * 上下文可以由整个web应用程序使用，而每个servlet都有
+ * 它自己的子上下文独立于任何其他servlet的子上下文
+ * 
+ * 
+ */
+public interface ApplicationContext extends EnvironmentCapable, ListableBeanFactory, HierarchicalBeanFactory,
+		MessageSource, ApplicationEventPublisher, ResourcePatternResolver {
+
+	/**
+	 * 返回此应用程序上下文的唯一id;如果没有则返回null
+	 */
+	String getId();
+
+	/**
+	 * 返回已部署应用程序的名称，或默认为空字符串
+	 */
+	String getApplicationName();
+
+	/**
+	 * 返回此上下文的显示名称（从不null）
+	 */
+	String getDisplayName();
+
+	/**
+	 * 返回首次加载此上下文时的时间戳（ms）
+	 */
+	long getStartupDate();
+
+	/**
+	 * 返回父上下文，如果没有父上下文，则返回{@code null}
+	 */
+	ApplicationContext getParent();
+
+	/**
+	 * 为此上下文公开AutowireCapableBeanFactory功能
+	 * initializing bean instances that live outside of the application context,applying the Spring bean lifecycle (fully or partly) to 	 * them.
+	 * 在当前的Spring框架中
+     * 版本中，只有可刷新(refresh())的应用程序上下文才有这种行为；从4.2开始，
+     * 所有应用程序上下文实现都必须遵守。
+	 */
+	AutowireCapableBeanFactory getAutowireCapableBeanFactory() throws IllegalStateException;
+
+}
+```
+
+- 继承关系图
+
+  ![](images/spring6.png)
+
+
+
+### AbstractApplicationContext通用上下文
+
+- ![](images/spring4.PNG)
+
+
+
+
+### AnnotationConfigApplicationContext
 
 - 独立的应用程序上下文
 
@@ -454,8 +536,94 @@ public interface BeanDefinitionRegistry extends AliasRegistry {
 
   //todo JSR-250
 
-## AbstractApplicationContext通用上下文
+#### 解析
 
-- ![](images/spring4.PNG)
+##### (一)
 
-- 
+1. ```java
+   public AnnotationConfigApplicationContext(Class<?>... annotatedClasses) {
+   		this();
+   		register(annotatedClasses);
+   		refresh();
+   }
+   ```
+
+   - ```java
+     public AnnotationConfigApplicationContext() {
+     		this.reader = new AnnotatedBeanDefinitionReader(this);
+     		this.scanner = new ClassPathBeanDefinitionScanner(this);
+     }
+     ```
+
+   - 
+
+
+
+# Spring中常见命名
+
+### Capable
+
+- `XXXCapable` 
+
+-  带有Capable后缀的接口在Spring中带有getXXX的含义，也就是实现了这个接口，就可以通过该接口的实例获取到`xxx`。 
+
+  - ```java
+    package org.springframework.core.env;
+    public interface EnvironmentCapable {
+    	Environment getEnvironment();
+    }
+    ```
+
+  - 
+
+### Registry
+
+- `xxxRegistry`
+
+- 注册`xxx`的类
+
+  - ```java
+    package org.springframework.core;
+    public interface AliasRegistry {
+    	void registerAlias(String name, String alias);
+    	void removeAlias(String alias);
+    	boolean isAlias(String name);
+    	String[] getAliases(String name);
+    
+    }
+    
+    ```
+
+  - ```java
+    package org.springframework.beans.factory.support;
+    
+    import org.springframework.beans.factory.BeanDefinitionStoreException;
+    import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+    import org.springframework.beans.factory.config.BeanDefinition;
+    import org.springframework.core.AliasRegistry;
+    
+    public interface BeanDefinitionRegistry extends AliasRegistry {
+    	void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
+    			throws BeanDefinitionStoreException;
+    	void removeBeanDefinition(String beanName) throws NoSuchBeanDefinitionException;
+    	BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException;
+    	boolean containsBeanDefinition(String beanName);
+    	String[] getBeanDefinitionNames();
+    	int getBeanDefinitionCount();
+    	boolean isBeanNameInUse(String beanName);
+    
+    }
+    
+    ```
+
+  - ```java
+    package org.springframework.context.annotation;
+    
+    public interface AnnotationConfigRegistry {
+    	void register(Class<?>... annotatedClasses);
+    	void scan(String... basePackages);
+    
+    }
+    ```
+
+  - 
