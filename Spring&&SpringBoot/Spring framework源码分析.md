@@ -427,8 +427,13 @@ public interface BeanDefinitionRegistry extends AliasRegistry {
 
 - 
 
+## AnnotationScopeMetadataResolver
 
+- ![](images/spring7.png)
 
+-  **AnnotationScopeMetadataResolver主要负责对Scope注解的解析** 
+
+-  ScopeMetadata就是对Scope注解的描述转换
 
 
 # Spring framework 源码分析
@@ -627,3 +632,8 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
     ```
 
   - 
+
+### Resolver
+
+- XXXResolver  对XXX解析
+  -  AnnotationScopeMetadataResolver主要负责对Scope注解的解析 

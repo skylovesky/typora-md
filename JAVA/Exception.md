@@ -13,3 +13,4 @@
 - java.util.ConcurrentModificationException
 - 线程不安全的集合，HashMap  、 ArrayList ... 多线程remove() 或 for循环remove()
 
+#####  java.lang.SecurityException: Prohibited package name: java.center
