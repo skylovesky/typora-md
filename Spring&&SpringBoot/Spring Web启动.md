@@ -4,6 +4,25 @@
 
 ![](images/webt1.png)
 
+![](images/webt2.png)
+
+### 两个核心功能
+
+1. 处理socket连接，负责网络字节流与Request和Response对象的转换（连接器）
+2. 加载和管理Servlet，以及具体处理Request请求（容器）
+
+### 连接器（Coyote）
+
+Coyote是Tomcat的连接器框架的名称，也是Tomcat服务器提供的供客户端访问的外部接口。客户端通过Coyote与服务器建立连接、发送请求并接受响应。
+
+![](images/webt3.PNG)
+
+
+
+
+
+
+
 ### 架构讲解
 
 ####  Server
