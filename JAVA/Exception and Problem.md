@@ -14,3 +14,11 @@
 - 线程不安全的集合，HashMap  、 ArrayList ... 多线程remove() 或 for循环remove()
 
 #####  java.lang.SecurityException: Prohibited package name: java.center
+
+
+
+# 问题
+
+### 无效放发行版本8
+
+![](images/p1.png)
