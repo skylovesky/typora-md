@@ -6,25 +6,6 @@
 
 ![](images/webt2.png)
 
-### 两个核心功能
-
-1. 处理socket连接，负责网络字节流与Request和Response对象的转换（连接器）
-2. 加载和管理Servlet，以及具体处理Request请求（容器）
-
-### 连接器（Coyote）
-
-Coyote是Tomcat的连接器框架的名称，也是Tomcat服务器提供的供客户端访问的外部接口。客户端通过Coyote与服务器建立连接、发送请求并接受响应。
-
-![](images/webt3.PNG)
-
-#### 连接器组件
-
-![](images/webt4.png)
-
-##### Endpoint
-
-- 监听通信端口，接收Socket请求，用来实现TCP/IP协议的，对具体的Socket接收和发送处理器。
-
 
 
 ### 架构讲解
@@ -39,7 +20,7 @@ Coyote是Tomcat的连接器框架的名称，也是Tomcat服务器提供的供�
 
 - Service是存活在Server内部的中间组件，它将**一个或多个连接器（Connector）组件绑定到一个单独的引擎（Engine）上**
 - 在Server中，可以包含一个或多个Service组件。Service也很少由用户定制，Tomcat提供了Service接口的默认实现，而这种实现既简单又能满足应用
--  负责处理所有Connector所获得的客户请求 
+- 负责处理所有Connector所获得的客户请求 
 
 #### Connector（连接器）
 
@@ -69,6 +50,135 @@ Coyote是Tomcat的连接器框架的名称，也是Tomcat服务器提供的供�
 - 当Context获得请求时，将在自己的映射表(mapping table)中寻找相匹配的Servlet类如果找到，则执行该类，获得请求的回应，并返回
 
 > 一个Context表示了一个Web应用程序，运行在特定的虚拟主机中。什么是Web应用程序呢？在Sun公司发布的Java Servlet规范中，对Web应用程序做出了如下的定义：“一个Web应用程序是由一组Servlet、HTML页面、类，以及其他的资源组成的运行在Web服务器上的完整的应用程序。它可以在多个供应商提供的实现了Servlet规范的Web容器中运行”。一个Host可以包含多个Context（代表Web应用程序），每一个Context都有一个唯一的路径。用户通常不需要创建自定义的Context，因为Tomcat给出的Context接口的实现（类StandardContext）提供了重要的附加功能。
+
+### 两个核心功能
+
+1. 处理socket连接，负责网络字节流与Request和Response对象的转换（连接器）
+2. 加载和管理Servlet，以及具体处理Request请求（容器）
+
+### 连接器（Coyote）
+
+Coyote是Tomcat的连接器框架的名称，也是Tomcat服务器提供的供客户端访问的外部接口。客户端通过Coyote与服务器建立连接、发送请求并接受响应。
+
+![](images/webt3.PNG)
+
+#### 连接器组件
+
+![](images/webt4.png)
+
+##### Endpoint
+
+- 监听通信端口，接收Socket请求，用来实现TCP/IP协议的，对具体的Socket接收和发送处理器。
+
+
+
+
+
+### Tomcat服务器配置
+
+#### server.xml
+
+> 在server.xml中，可以更清晰的认知Tomcat的框架。
+
+是Tomcat服务器配置的核心配置文件，包含了Tomcat的Servlet容器（Catalina）的所有配置。
+
+##### Server
+
+是server.xml的根元素，用于创建一个Server实例，默认使用的实现类是`org.apache.catalina.core.StandardServer`。
+
+```xml
+<Server port="8005" shutdown="SHUTDOWN">
+    ...
+</Server>
+```
+
+- port:Tomcat监听关闭服务的端口
+- shutdown：关闭服务器使用的指令字符串
+
+Server内嵌子元素为`Listener`、`GlobalNamingResources`、`Service`
+
+- `Listener`
+
+  ```xml
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+    <!-- Security listener. Documentation at /docs/config/listeners.html
+    <Listener className="org.apache.catalina.security.SecurityListener" />
+    -->
+    <!--APR library loader. Documentation at /docs/apr.html -->
+    <!--用于加载（服务器启动）和销毁（服务器停止）APR，如果找不到APR，则会输出日志，并不会影响Tomcat的启动-->
+    <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+    <!--Initialize Jasper prior to webapps are loaded. Documentation at /docs/jasper-howto.html -->
+    <!--初始化JSP解析器-->
+    <Listener className="org.apache.catalina.core.JasperListener" />
+    <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+    <!--用于避免JRE内存泄漏问题-->
+    <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+    <!--用于加载（服务器启动）和销毁（服务器停止）全局命名服务-->
+    <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+    <!--用于在Context停止时，重建Executor池中的线程，以避免ThreadLocal相关的内存泄漏-->
+    <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+  ```
+
+- `GlobalNamingResources`中定义了全局命名服务
+
+  ```xml
+    <GlobalNamingResources>
+      <!-- Editable user database that can also be used by
+           UserDatabaseRealm to authenticate users
+      -->
+      <Resource name="UserDatabase" auth="Container"
+                type="org.apache.catalina.UserDatabase"
+                description="User database that can be updated and saved"
+                factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                pathname="conf/tomcat-users.xml" /><!--用户角色配置信息-->
+    </GlobalNamingResources>
+  ```
+
+
+
+##### Service
+
+该元素用于创建Service实例，默认使用`org.apache.catalina.core.StandardService`实现，默认情况下仅指定了Service的名称，值为`Catalina`。
+
+service的内嵌元素为：
+
+- Listener
+
+  为Service添加生命周期监听器
+
+- Executor
+
+  用于配置Service共享线程池
+
+- Connector
+
+  配置Service包含的连接器
+
+- Engine
+
+  用于配置Service中连接器对应的Servlet容器引擎
+
+```xml
+<Service name="Catalina">
+    ...
+</Service>
+```
+
+一个Server容器可以包含多个Service服务。
+
+
+
+##### Executor
+
+##### Connector
+
+##### Engine
+
+##### Host
+
+##### Context
+
+
 
 ### 解析
 

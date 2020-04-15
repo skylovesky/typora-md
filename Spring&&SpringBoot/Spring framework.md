@@ -491,6 +491,12 @@ public void logException(JoinPoint joinPoint,Exception exception){
 
 
 
+## 扩展原理
+
+
+
+
+
 # refresh() 刷新容器
 
 AbstractApplicationContext
