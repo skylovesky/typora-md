@@ -436,6 +436,8 @@ service的内嵌元素为：
 
 ####  Lifecycle（生命周期）
 
+![](images/webt7.png)
+
 ```java
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more

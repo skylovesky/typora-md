@@ -54,7 +54,7 @@ Collections.synchronizedSet(new HashSet<>());
    ```
 
 ```java
-java.util.concurrent;
+package java.util.concurrent;
 public class CopyOnWriteArrayList<E>
     implements List<E>, RandomAccess, Cloneable, java.io.Serializable {
     
@@ -129,7 +129,7 @@ volatile变量不会被缓存在寄存器或者对其他处理器不可见的地
 
 ##### 禁止指令重排的原理
 
-olatile关键字提供内存屏障的方式来防止指令被重排，编译器在生成字节码文件时，会在指令序列中插入内存屏障来禁止特定类型的处理器重排序。
+volatile关键字提供内存屏障的方式来防止指令被重排，编译器在生成字节码文件时，会在指令序列中插入内存屏障来禁止特定类型的处理器重排序。
 
   JVM内存屏障插入策略：
 
