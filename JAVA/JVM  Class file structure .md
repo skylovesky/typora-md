@@ -22,24 +22,24 @@ Class文件是一组以8个字节为基础单位的二进制流，各个数据�
 - 无符号数：属于基本的数据类型，以u1、u2、u4、u8来分别代表1个字节、2个字节、4个字节和8个字节的无符号数，无符号数可以用来描述数组、索引引用、数量值或者按照UTF-8编码构成字符串值。
 - 表:是由多个无符号数或其他表作为数据项构成的复合数据类型，为了便于区分，所有表的命名都习惯地以 `_info`结尾。表用于描述有层次关系的复合数据结构的数据，整个Class文件本质上也可以视作是一张表，这张表由下图所示的数据项按照严格顺序排列构成。
 
-| 类型           | 名称                | 数量                    |      |
-| -------------- | ------------------- | ----------------------- | ---- |
-| u4             | magic               | 1                       |      |
-| u2             | minor_version       | 1                       |      |
-| u2             | major_version       | 1                       |      |
-| u2             | constant_pool_count | 1                       |      |
-| cp_info        | constant_pool       | constant_pool_count - 1 |      |
-| u2             | access_flags        | 1                       |      |
-| u2             | this_class          | 1                       |      |
-| u2             | super_class         | 1                       |      |
-| u2             | interfaces_count    | 1                       |      |
-| u2             | interfaces          | interfaces_count        |      |
-| u2             | fields_count        | 1                       |      |
-| field_info     | fields              | fields_count            |      |
-| u2             | methods_count       | 1                       |      |
-| method_info    | methods             | methods_count           |      |
-| u2             | attributes_count    | 1                       |      |
-| attribute_info | attributes          | attributes_count        |      |
+| 类型           | 名称                | 数量                    |                       |
+| -------------- | ------------------- | ----------------------- | --------------------- |
+| u4             | magic               | 1                       | 魔数                  |
+| u2             | minor_version       | 1                       | 次版本                |
+| u2             | major_version       | 1                       | 主版本                |
+| u2             | constant_pool_count | 1                       | 常量池计数值，从1开始 |
+| cp_info        | constant_pool       | constant_pool_count - 1 | 常量池                |
+| u2             | access_flags        | 1                       |                       |
+| u2             | this_class          | 1                       |                       |
+| u2             | super_class         | 1                       |                       |
+| u2             | interfaces_count    | 1                       |                       |
+| u2             | interfaces          | interfaces_count        |                       |
+| u2             | fields_count        | 1                       |                       |
+| field_info     | fields              | fields_count            |                       |
+| u2             | methods_count       | 1                       |                       |
+| method_info    | methods             | methods_count           |                       |
+| u2             | attributes_count    | 1                       |                       |
+| attribute_info | attributes          | attributes_count        |                       |
 
 
 
@@ -145,7 +145,7 @@ cp_info {
   | `CONSTANT_NameAndType_info`        | 12          | 字段或方法的部分符号引用       |      |
   | `CONSTANT_MethodHandle_info`       | 15          | 表示方法句柄                   |      |
   | `CONSTANT_MethodType_info`         | 16          | 表示方法类型                   |      |
-  | `CONSTANT_Dynameic_ifo`            | 17          | 表示一个动态计算常量           |      |
+  | `CONSTANT_Dynameic_info`           | 17          | 表示一个动态计算常量           |      |
   | `CONSTANT_InvokeDynamic_info`      | 18          | 表示一个动态方法调用点         |      |
   | `CONSTANT_Module_info`             | 19          | 表示一个模块                   |      |
   | `CONSTANT_Package_info`            | 20          | 表示一个模块中开放或者导出的包 |      |
@@ -178,15 +178,52 @@ cp_info {
 | u1   | bytes  | length |
 
 - tag
-- length:
+
+- length:说明了这个`UTF-8`编码的字符串长度是多少字节
+
+  由于Class文件中方法、字段都需要引用`CONSTANT_Utf8_info`型常量来描述名称，所以`CONSTANT_Utf8_info`型常量的最大长度也就是Java方法、字段名的最大长度。而这里的的最大长度就是length的最大值，u2能表达的最大值65535，所以超过64k英文字符的变量名或方法名，即使规则和全面部字符都是合法的，也会无法编译。
+
+- bytes：长度为length字节的连续数据，是一个使用了`UTF-8`缩略编码表示的字符串。
+
+  `UTF-8缩略编码`与`UTF-8编码`的区别是：
+
+  从`\u0001`到`\u007f`之间的字符（相当于`1-127`的ASCII码）的缩略编码使用一个字节表示
+
+  从`\u0080`到`\u07ff`之间的所有字符（相当于128-2047`的ASCII码）的缩略编码使用两个字节表示
+
+  从`\u0800`到`\uffff`之间的所有字符（相当于`2048-65535`的ASCII码）的缩略编码按照普通UTF-8编码规则使用三个字节表示。
 
 
 
+常量池中的结构数据类型的结构总表
+
+![](images/JVM ClassLoader/jvmclassloader3.PNG)
+
+![](images/JVM ClassLoader/jvmclassloader4.PNG)
 
 
 
+#### 访问标志(access_flags)
 
+- `u2`,紧接在常量池结束之后
 
+- 这个标志用于识别一些类或者接口层次的访问信息，包括：这个class是类还是接口，是否定义为public类型，是否定义为abstract类型，如果是类的话，否被声明为final等． 
+
+- 访问标志及其含义具体如下:
+
+  | 标志名称         | 标志值    | 含义                                                         |
+  | ---------------- | --------- | ------------------------------------------------------------ |
+  | `ACC_PUBLIC`     | `0x00 01` | 是否为Public类型                                             |
+  | `ACC_FINAL`      | `0x00 10` | 是否被声明为final，只有类可以设置                            |
+  | `ACC_SUPER`      | `0x00 20` | 是否允许使用invoke special字节码指令的新语义．               |
+  | `ACC_INTERFACE`  | `0x02 00` | 标志这是一个接口                                             |
+  | `ACC_ABSTRACT`   | `0x04 00` | 是否为abstract类型，对于接口或者抽象类来说，次标志值为真，其他类型为假 |
+  | `ACC_SYNTHETIC`  | `0x10 00` | 标志这个类并非由用户代码产生                                 |
+  | `ACC_ANNOTATION` | `0x20 00` | 标志这是一个注解                                             |
+  | `ACC_ENUM`       | `0x40 00` | 标志这是一个枚举                                             |
+  | `ACC_MODULE`     | `0x80 00` | 标志这是一个模块                                             |
+
+- 以或  `|`运算符进行运算，通过标志值的或运算，可以看出哪些是定义的。
 
 
 
@@ -319,7 +356,7 @@ package com.louis.jvm;
 
 
  
- 
+
 
  然后用编译器编译成IntAndFloatTest.class字节码文件，我们通过**javap -v IntAndFloatTest** 指令来看一下其常量池中的信息，可以看到虽然我们在代码中写了两次**10** 和三次**11f**，但是常量池中，就只有一个常量**10** 和一个常量**11f**,如下图所示:
 
@@ -360,7 +397,7 @@ package com.louis.jvm;
 11.  } 
 
  
- 
+
 
    然后用编译器编译成 LongAndDoubleTest.class 字节码文件，我们通过**javap -v LongAndDoubleTest**指令来看一下其常量池中的信息，可以看到虽然我们在代码中写了三次**-6076574518398440533L** 和三次**10.1234567890D**，但是常量池中，就只有一个常量**-6076574518398440533L** 和一个常量**10.1234567890D**,如下图所示:
 
