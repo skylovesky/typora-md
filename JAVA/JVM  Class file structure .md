@@ -29,13 +29,13 @@ Class文件是一组以8个字节为基础单位的二进制流，各个数据�
 | u2             | major_version       | 1                       | 主版本                |
 | u2             | constant_pool_count | 1                       | 常量池计数值，从1开始 |
 | cp_info        | constant_pool       | constant_pool_count - 1 | 常量池                |
-| u2             | access_flags        | 1                       |                       |
-| u2             | this_class          | 1                       |                       |
-| u2             | super_class         | 1                       |                       |
-| u2             | interfaces_count    | 1                       |                       |
-| u2             | interfaces          | interfaces_count        |                       |
-| u2             | fields_count        | 1                       |                       |
-| field_info     | fields              | fields_count            |                       |
+| u2             | access_flags        | 1                       | 访问标志              |
+| u2             | this_class          | 1                       | 类索引                |
+| u2             | super_class         | 1                       | 父类索引              |
+| u2             | interfaces_count    | 1                       | 接口索引集合长度      |
+| 一组u2类型集合 | interfaces          | interfaces_count        | 接口索引集合          |
+| u2             | fields_count        | 1                       | 字段表集合长度        |
+| field_info     | fields              | fields_count            | 字段表集合            |
 | u2             | methods_count       | 1                       |                       |
 | method_info    | methods             | methods_count           |                       |
 | u2             | attributes_count    | 1                       |                       |
@@ -225,15 +225,83 @@ cp_info {
 
 - 以或  `|`运算符进行运算，通过标志值的或运算，可以看出哪些是定义的。
 
+#### 类索引、父类索引与接口索引集合
+
+Class文件中由这三项数据来确定该类型的继承关系。
+
+类索引（this_class）：
+
+- u2类型
+  - 索引值指向类型`CONSTANT_Class_info`的类描述符常量，通过`CONSTANT_Class_info`类型的常量中索引值可以找到定义在`CONSTANT_Utf8_info`类型的常量中全限定名字字符串。
+- 用于确定这个类的全限定名
+
+父类索引（super_class）
+
+- u2类型
+  - 索引值指向类型`CONSTANT_Class_info`的类描述符常量，通过`CONSTANT_Class_info`类型的常量中索引值可以找到定义在`CONSTANT_Utf8_info`类型的常量中全限定名字字符串。
+- 用于确定这个类的的父类全限定名，JAVA不允许多重继承，索引父类索引只有一个。除了`java.lang.Object`之外，所有Java类的父类索引都不为0
 
 
 
+![](images/JVMclassLoader3.png)
 
+接口索引集合（interfaces）
 
+- 一组u2类型的数据集合
+- 用来描述这个类实现了哪些接口，这些接口按`implements`关键字（如果这个Class文件中表示的是一个接口，则应当是`extends`关键字）后的接口顺序从左到右排列在接口索引集合中。
 
+#### 字段表集合
 
+- 字段表结构
 
+  | 类型           | 名称             | 数量             |              |
+  | -------------- | ---------------- | ---------------- | ------------ |
+  | ｕ2            | access_flags     | 1                | 字段访问标志 |
+  | ｕ2            | name_index       | 1                |              |
+  | ｕ2            | descriptor_index | 1                |              |
+  | ｕ2            | attributes_count | 1                |              |
+  | attribute_info | attributes       | attributes_count |              |
 
+- 字段访问标志
+
+  | 标志名称      | 标志值  | 含义                       |
+  | ------------- | ------- | -------------------------- |
+  | ACC_PUBLIC    | 0x00 01 | 字段是否为public           |
+  | ACC_PRIVATE   | 0x00 02 | 字段是否为private          |
+  | ACC_PROTECTED | 0x00 04 | 字段是否为protected        |
+  | ACC_STATIC    | 0x00 08 | 字段是否为static           |
+  | ACC_FINAL     | 0x00 10 | 字段是否为final            |
+  | ACC_VOLATILE  | 0x00 40 | 字段是否为volatile         |
+  | ACC_TRANSTENT | 0x00 80 | 字段是否为transient        |
+  | ACC_SYNCHETIC | 0x10 00 | 字段是否为由编译器自动产生 |
+  | ACC_ENUM      | 0x40 00 | 字段是否为enum             |
+
+- name_index和descriptior_index
+
+  字段的简单名称以及字段和方法的描述符。
+
+  描述符的作用是用来描述字段的数据类型，方法的参数列表（包括数量，类型以及顺序）和返回值．根据描述符规则，基本数据类型以及代表无返回值的void类型都用一个大写字符来表示，而对象类型则用字符加L加对象名的全限定名来表示． 
+
+   描述符标志含义： 
+
+  | 标志符 | 含义                |
+  | ------ | ------------------- |
+  | B      | 基本数据类型byte    |
+  | C      | 基本数据类型char    |
+  | D      | 基本数据类型double  |
+  | F      | 基本数据类型float   |
+  | I      | 基本数据类型int     |
+  | J      | 基本数据类型long    |
+  | S      | 基本数据类型short   |
+  | Z      | 基本数据类型boolean |
+  | V      | 基本数据类型void    |
+  | L      | 对象类型            |
+
+  对于数组类型，每一维度将使用一个前置的＂［＂字符来描述．如一个定义为＂java.lang.Stirng[ ]＂类型的二维数组，将被记录为：＂［［Ljava/lang/Stirng＂，一个整型数组＂int［］＂将被记录为＂［I＂． 
+
+  用描述符来描述方法时，按照先参数列表，后返回值的顺序来描述，参数列表按照参数的严格顺序放在一组小括号＂（）＂之内． 
+
+  字段表集合中不会列出从父类或者父接口中继承而来的字段，但有可能列出原来Java代码中不存在的字段，譬如在内部类中为了保持对外部类的访问性，会自动添加指向外部类实例的字段．另外，在Java语言中字段是无法重载的，两个字段的数据类型，修饰符不管是否相同，都必须使用不一样的名称，但是对于字节码来讲，如果连个字段的描述符不一致，那字段重名就是合法的． 
 
 
 
