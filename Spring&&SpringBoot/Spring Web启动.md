@@ -903,5 +903,29 @@ public interface Lifecycle {
   
   ```
 
-  
+
+
+
+## 实际分析
+
+### HTTP请求
+
+1. 用户通过浏览器向服务器发送HTTP请求（实际是请求建立TCP连接，即向指定服务器IP或者域名的指定端口发送Socket-TCP请求-看看HTTP能否成功建立连接）
+2. TCP连接如果找到指定的服务器，并且服务器开启
+3. TCP会尝试与该服务器的指定端口建立连接（如果Tomcat开启，Tomcat中个过程：先经过Server，在路过service，在到Coyote连接器，连接器与socket建立连接）
+4. 连接建立成功（服务器程序接受浏览器请求，并经过TCP三次握手建立连接），Socket客户端（浏览器）会知道连接成功信息
+5. 浏览器再把用户的请求打包成HTTP协议格式的数据包
+6. 浏览器将HTTP协议的格式包推入网络，数据包通过网络传输，最终到达服务程序
+7. 该请求，先经过Server，在路过service，在到Coyote连接器
+8. 连接器解析socket的HTTP协议请求，解析HTTP协议格式的数据包
+9. 解析后的request信息会交给Engine引擎处理（引擎会创建对应的响应response）
+10. 引擎通过URI找到具体的Host（Host中包含Context）
+11. Context获得请求后，找到对应的Servlet（Servlet会进行业务处理），并返回响应（response）结果（有可能是图片，HTML，json..）
+12. 连接器负责处理Response响应信息，按照HTTP协议格式打包数据
+13. 连接器将数据包推入网络，经过网络传输，最终到达浏览器。
+14. 浏览器解析HTTP（HttpResponse）响应信息，并呈现给用户（浏览器只能解析静态资源，所以HttpResponse中信息全是静态资源信息）
+
+
+
+## LAST
 
