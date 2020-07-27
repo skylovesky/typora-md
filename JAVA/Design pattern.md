@@ -7,9 +7,9 @@
 
 
 
-# 结构型模式
 
-## 对象模式
+
+
 
 ###  门面 /外观模式（Facade）
 
@@ -56,7 +56,7 @@ slf4j-simple、logback都是slf4j的具体实现，log4j并不直接实现slf4j�
 
 
 
-## 类模式
+
 
 ### 适配器模式（Adapter）
 
@@ -71,9 +71,9 @@ slf4j-simple、logback都是slf4j的具体实现，log4j并不直接实现slf4j�
 
 
 
-# 创建型模式
 
-## 对象模式
+
+
 
 ### 构建器模式（Builder）
 
@@ -149,11 +149,11 @@ public class NutritionFacts {
 
 - 得到一个流式的API
 
-## 类模式
 
-# 行为型模式
 
-## 对象模式
+
+
+
 
 ### 责任链模式
 
@@ -161,7 +161,7 @@ public class NutritionFacts {
 >
 > 在这种模式中，通常每个接收者都包含对另一个接收者的引用。如果一个对象不能处理该请求，那么它会把相同的请求传给下一个接收者，依此类推。
 
-### 介绍
+介绍
 
 **意图：**避免请求发送者与接收者耦合在一起，让多个对象都有可能接收请求，将这些对象连接成一条链，并且沿着这条链传递请求，直到有对象处理它为止。
 
@@ -187,7 +187,7 @@ public class NutritionFacts {
 
 ![责任链SpringMVC](images/\design/责任链.PNG)
 
-## 类模式
+
 
 
 
