@@ -927,7 +927,300 @@ public interface Lifecycle {
 
 
 
-## 启动
+## 问题解析
+
+#### Tomcat config目录里面的配置文件如何加载的
+
+1.  Bootstrap.main()
+
+   ```java
+    public static void main(String args[]) {
+        Bootstrap bootstrap = new Bootstrap();
+        
+        //初始化真正的启动类Catalina
+        bootstrap.init();
+        /**
+        	//Set Catalina path
+        	setCatalinaHome();
+        	setCatalinaBase();
+        	initClassLoaders()//初始化类加载器
+        		{
+        			commonLoader = createClassLoader("common", null);
+        			catalinaLoader = createClassLoader("server", commonLoader);//URLClassLoader
+        			sharedLoader = createClassLoader("shared", commonLoader);
+        		}
+        	Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
+           Object startupInstance = startupClass.newInstance();//创建Catalina实例
+           
+           //设置Catalina的父加载器
+           String methodName = "setParentClassLoader";
+           Class<?> paramTypes[] = new Class[1];
+           paramTypes[0] = Class.forName("java.lang.ClassLoader");
+           Object paramValues[] = new Object[1];
+           paramValues[0] = sharedLoader;
+           Method method = startupInstance.getClass().getMethod(methodName, paramTypes);
+           //method is ---> public void org.apache.catalina.startup.Catalina.setParentClassLoader(java.lang.ClassLoader)
+           method.invoke(startupInstance, paramValues);
+   
+           catalinaDaemon = startupInstance;//赋值给 catalinaDaemon
+        */
+        
+        String command = "start";
+        
+        if (command.equals("start")) {
+            daemon.setAwait(true);
+            daemon.load(args);
+            /**
+            private void load(String[] arguments) throws Exception {
+            	 String methodName = "load";
+            	 Method method = catalinaDaemon.getClass().getMethod(methodName, paramTypes);
+            	 //method is ---> public void org.apache.catalina.startup.Catalina.load()
+            	 method.invoke(catalinaDaemon, param);//通过反射机制调用了Catalina.load()
+            }
+            */
+            daemon.start();
+            if (null == daemon.getServer()) {
+                System.exit(1);
+            }
+        }
+    }
+   ```
+
+   2. Catalina.load()
+
+   ```java
+   public void load() {
+   	if (loaded) {
+               return;
+       }
+       loaded = true;
+       long t1 = System.nanoTime();
+   
+       initDirs();
+       // Before digester - it may be needed
+       initNaming();
+   
+       // Create and execute our Digester
+       Digester digester = createStartDigester();//设置了解析server.xml的规则
+   
+       InputSource inputSource = null;
+       InputStream inputStream = null;
+       File file = null;
+       try {
+           try {
+               file = configFile();
+               inputStream = new FileInputStream(file);
+               inputSource = new InputSource(file.toURI().toURL().toString());
+           } catch (Exception e) {
+               if (log.isDebugEnabled()) {
+                   log.debug(sm.getString("catalina.configFail", file), e);
+               }
+           }
+           if (inputStream == null) {
+               try {
+                   inputStream = getClass().getClassLoader()
+                       .getResourceAsStream(getConfigFile());
+                   inputSource = new InputSource
+                       (getClass().getClassLoader()
+                        .getResource(getConfigFile()).toString());
+               } catch (Exception e) {
+                   if (log.isDebugEnabled()) {
+                       log.debug(sm.getString("catalina.configFail",
+                                              getConfigFile()), e);
+                   }
+               }
+           }
+   
+           // This should be included in catalina.jar
+           // Alternative: don't bother with xml, just create it manually.
+           if( inputStream==null ) {
+               try {
+                   inputStream = getClass().getClassLoader()
+                       .getResourceAsStream("server-embed.xml");
+                   inputSource = new InputSource
+                       (getClass().getClassLoader()
+                        .getResource("server-embed.xml").toString());
+               } catch (Exception e) {
+                   if (log.isDebugEnabled()) {
+                       log.debug(sm.getString("catalina.configFail",
+                                              "server-embed.xml"), e);
+                   }
+               }
+           }
+   
+   
+           if (inputStream == null || inputSource == null) {
+               if  (file == null) {
+                   log.warn(sm.getString("catalina.configFail",
+                                         getConfigFile() + "] or [server-embed.xml]"));
+               } else {
+                   log.warn(sm.getString("catalina.configFail",
+                                         file.getAbsolutePath()));
+                   if (file.exists() && !file.canRead()) {
+                       log.warn("Permissions incorrect, read permission is not allowed on the file.");
+                   }
+               }
+               return;
+           }
+   
+           try {
+               inputSource.setByteStream(inputStream);
+               digester.push(this);
+               digester.parse(inputSource);
+           } catch (SAXParseException spe) {
+               log.warn("Catalina.start using " + getConfigFile() + ": " +
+                        spe.getMessage());
+               return;
+           } catch (Exception e) {
+               log.warn("Catalina.start using " + getConfigFile() + ": " , e);
+               return;
+           }
+       } finally {
+           if (inputStream != null) {
+               try {
+                   inputStream.close();
+               } catch (IOException e) {
+                   // Ignore
+               }
+           }
+       }
+   
+       getServer().setCatalina(this);
+   
+       // Stream redirection
+       initStreams();
+   
+       // Start the new server
+       try {
+           getServer().init();
+       } catch (LifecycleException e) {
+           if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
+               throw new java.lang.Error(e);
+           } else {
+               log.error("Catalina.start", e);
+           }
+       }
+   
+       long t2 = System.nanoTime();
+       if(log.isInfoEnabled()) {
+           log.info("Initialization processed in " + ((t2 - t1) / 1000000) + " ms");
+       }
+   }
+   ```
+
+   Catalina.createStartDigester()
+
+   ```java
+   protected Digester createStartDigester() {
+           long t1=System.currentTimeMillis();
+           // Initialize the digester
+           Digester digester = new Digester();
+           digester.setValidating(false);
+           digester.setRulesValidation(true);
+           Map<Class<?>, List<String>> fakeAttributes = new HashMap<Class<?>, List<String>>();
+           List<String> objectAttrs = new ArrayList<String>();
+           objectAttrs.add("className");
+           fakeAttributes.put(Object.class, objectAttrs);
+           // Ignore attribute added by Eclipse for its internal tracking
+           List<String> contextAttrs = new ArrayList<String>();
+           contextAttrs.add("source");
+           fakeAttributes.put(StandardContext.class, contextAttrs);
+           digester.setFakeAttributes(fakeAttributes);
+           digester.setUseContextClassLoader(true);
+   
+           // Configure the actions we will be using
+           digester.addObjectCreate("Server",
+                                    "org.apache.catalina.core.StandardServer",
+                                    "className");
+           digester.addSetProperties("Server");
+           digester.addSetNext("Server",
+                               "setServer",
+                               "org.apache.catalina.Server");
+   
+           digester.addObjectCreate("Server/GlobalNamingResources",
+                                    "org.apache.catalina.deploy.NamingResources");
+           digester.addSetProperties("Server/GlobalNamingResources");
+           digester.addSetNext("Server/GlobalNamingResources",
+                               "setGlobalNamingResources",
+                               "org.apache.catalina.deploy.NamingResources");
+   
+           digester.addObjectCreate("Server/Listener",
+                                    null, // MUST be specified in the element
+                                    "className");
+           digester.addSetProperties("Server/Listener");
+           digester.addSetNext("Server/Listener",
+                               "addLifecycleListener",
+                               "org.apache.catalina.LifecycleListener");
+   
+           digester.addObjectCreate("Server/Service",
+                                    "org.apache.catalina.core.StandardService",
+                                    "className");
+           digester.addSetProperties("Server/Service");
+           digester.addSetNext("Server/Service",
+                               "addService",
+                               "org.apache.catalina.Service");
+   
+           digester.addObjectCreate("Server/Service/Listener",
+                                    null, // MUST be specified in the element
+                                    "className");
+           digester.addSetProperties("Server/Service/Listener");
+           digester.addSetNext("Server/Service/Listener",
+                               "addLifecycleListener",
+                               "org.apache.catalina.LifecycleListener");
+   
+           //Executor
+           digester.addObjectCreate("Server/Service/Executor",
+                            "org.apache.catalina.core.StandardThreadExecutor",
+                            "className");
+           digester.addSetProperties("Server/Service/Executor");
+   
+           digester.addSetNext("Server/Service/Executor",
+                               "addExecutor",
+                               "org.apache.catalina.Executor");
+   
+   
+           digester.addRule("Server/Service/Connector",
+                            new ConnectorCreateRule());
+           digester.addRule("Server/Service/Connector",
+                            new SetAllPropertiesRule(new String[]{"executor"}));
+           digester.addSetNext("Server/Service/Connector",
+                               "addConnector",
+                               "org.apache.catalina.connector.Connector");
+   
+   
+           digester.addObjectCreate("Server/Service/Connector/Listener",
+                                    null, // MUST be specified in the element
+                                    "className");
+           digester.addSetProperties("Server/Service/Connector/Listener");
+           digester.addSetNext("Server/Service/Connector/Listener",
+                               "addLifecycleListener",
+                               "org.apache.catalina.LifecycleListener");
+   
+           // Add RuleSets for nested elements
+           digester.addRuleSet(new NamingRuleSet("Server/GlobalNamingResources/"));
+           digester.addRuleSet(new EngineRuleSet("Server/Service/"));
+           digester.addRuleSet(new HostRuleSet("Server/Service/Engine/"));
+           digester.addRuleSet(new ContextRuleSet("Server/Service/Engine/Host/"));
+           addClusterRuleSet(digester, "Server/Service/Engine/Host/Cluster/");
+           digester.addRuleSet(new NamingRuleSet("Server/Service/Engine/Host/Context/"));
+   
+           // When the 'engine' is found, set the parentClassLoader.
+           digester.addRule("Server/Service/Engine",
+                            new SetParentClassLoaderRule(parentClassLoader));
+           addClusterRuleSet(digester, "Server/Service/Engine/Cluster/");
+   
+           long t2=System.currentTimeMillis();
+           if (log.isDebugEnabled()) {
+               log.debug("Digester for server.xml created " + ( t2-t1 ));
+           }
+           return digester;
+   
+       }
+   ```
+
+   
+
+## 源码
 
 ### SecurityManager（java 安全管理器）
 
@@ -1079,6 +1372,12 @@ CatalinaProperties工具
 ### MBeanServer
 
 ### SecurityClassLoad
+
+### Digester
+
+```java
+org.apache.tomcat.util.digester.Digester
+```
 
 
 
